@@ -91,8 +91,9 @@ def start_udp_server(ip, port):
         while True:
             data, addr = sock.recvfrom(1024)  # バッファサイズは1024バイト
             try:
-                message = json.loads(data.decode())
-                print(f"Data received: {message}")
+                message: Dict = json.loads(data.decode())
+                ctr_data = ControllerData(message)
+                print(f"Data received: {ctr_data}")
             except json.JSONDecodeError:
                 print("Invalid JSON format")
                 continue
@@ -102,7 +103,7 @@ def start_udp_server(ip, port):
 
 if __name__ == "__main__":
     # server settings
-    host_name = socket.gethostname()
+    host_name = "raspberrypi.local"
     port = 12345
     
     start_udp_server("raspberrypi.local", port)

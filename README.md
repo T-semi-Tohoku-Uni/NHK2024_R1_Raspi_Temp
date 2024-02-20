@@ -35,6 +35,28 @@ sudo ip link set can0 up type can bitrate 1000000 dbitrate 1000000 fd on
 - `bitrate`: 通常のCAN通信の速度（1MHz）
 - `dbitrate` : FDCANの一部速度をはやくできる部分の速度（1MHz） => もう少しあげても耐える？
 
+この設定は起動時に毎回しないといけないので面倒だから, canの設定を記載したシェルスクリプト`can_init.sh`を起動時に実行するようにする. 
+`/usr/local/bin`ディレクトリに設定ファイルをコピー
+```
+sudo cp can_init.sh /usr/local/bin/
+```
+実行権限の変更
+```
+sudo chmod 700 /usr/local/bin/can_init.sh
+```
+`/etc/rc.local`を開らく
+```
+sudo vim /etc/rc.local
+```
+`exit 0`の直前に追加
+```
+/usr/local/bin/can_init.sh &
+```
+再起動する
+```
+sudo reboot
+```
+
 ### `python`で書く
 `python-can`ライブラリを使って簡単にできるらしい
 ```

@@ -1,7 +1,10 @@
 import socket
 import json
 from typing import Dict
-import connect_with_can
+from connect_with_can import send_message_on_can, receive_message
+import sys
+import can
+import multiprocessing
 
 class ControllerData:
     """
@@ -9,10 +12,12 @@ class ControllerData:
     
     Attributes
     ------------
-    joy_lx : int
-        左スティックのx軸の値
-    joy_ly : int
-        左スティックのy軸の値
+    v_x : int
+        x方向の速度
+    v_y : int
+        y方向の速度
+    omega: 
+        角速度
     btn_a : int
         Aボタンの状態
     btn_b : int
@@ -38,49 +43,26 @@ class ControllerData:
         data : Dict
             コントローラーのデータ（Dict形式）
         """
-        for key, value in data.items():
-            # 念の為型チェック
-            if key == "joy_lx":
-                if not isinstance(value, int):
-                    raise ValueError("joy_lx must be int")
-                else:
-                    setattr(self, key, value)
-                    continue
-            elif key == "joy_ly":
-                if not isinstance(value, int):
-                    raise ValueError("joy_ly must be int")
-                else:
-                    setattr(self, key, value)
-                    continue
-            elif key == "btn_a":
-                if not isinstance(value, int):
-                    raise ValueError("btn_a must be int")
-                else:
-                    setattr(self, key, value)
-                    continue
-            elif key == "btn_b":
-                if not isinstance(value, int):
-                    raise ValueError("btn_b must be int")
-                else:
-                    setattr(self, key, value)
-                    continue
-            elif key == "btn_x":
-                if not isinstance(value, int):
-                    raise ValueError("btn_x must be int")
-                else:
-                    setattr(self, key, value)
-                    continue
-            elif key == "btn_y": 
-                if not isinstance(value, int):
-                    raise ValueError("btn_y must be int")
-                else:
-                    setattr(self, key, value)
-                    continue
-            else:
-                raise ValueError(f"Invalid key: {key}")
+        try:
+            self.v_x = data["v_x"]
+            self.v_y = data["v_y"]
+            self.omega = data["omega"]
+            self.btn_a = data["btn_a"]
+            self.btn_b = data["btn_b"]
+            self.btn_x = data["btn_x"]
+            self.btn_y = data["btn_y"]
+        except Exception as e:
+            print("err at ControllerData::__init__  {e}")
+            sys.exit(1)
     
     def __repr__(self):
         return str(self.__dict__)
+
+def parse_message(data: ControllerData):
+    if data.btn_a == 1:
+        print("btn_a is pushed")
+        
+    send_message_on_can(0x106, bytearray([data.v_x, data.v_y, data.omega]))
 
 def start_udp_server(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -94,7 +76,11 @@ def start_udp_server(ip, port):
             try:
                 message: Dict = json.loads(data.decode())
                 ctr_data = ControllerData(message)
-                print(f"Data received: {ctr_data}")
+                print(f"v_x is {ctr_data.v_x} and v_y is {ctr_data.v_y}")
+                # p = multiprocessing.Process(target=parse_message, args=(ctr_data,))
+                # p.start()
+                # print(f"Data received: {ctr_data}")
+                parse_message(ctr_data)
             except json.JSONDecodeError:
                 print("Invalid JSON format")
                 continue
@@ -104,8 +90,15 @@ def start_udp_server(ip, port):
 
 if __name__ == "__main__":
     # server settings
-    host_name = "raspberrypi.local"
+    host_name = "R2.local"
     port = 12345
     
-    start_udp_server("raspberrypi.local", port)
+    # with can.interface.Bus(channel='can0', bustype='socketcan') as bus: 
+        # notifier = receive_message(bus)
+        
+        # try:
+    start_udp_server(host_name, port)
+        # except KeyboardInterrupt:
+            # notifier.stop()
+            # pass
 

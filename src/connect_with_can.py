@@ -43,7 +43,7 @@ if __name__ == "__main__":
     
         try:
             while True:
-                #send_message_on_can(0x123, [0x11, 0x22, 0x33])
+                send_message_on_can(0x123, [0x11, 0x22, 0x33])
                 time.sleep(0.1)
         except KeyboardInterrupt:
             notifier.stop()

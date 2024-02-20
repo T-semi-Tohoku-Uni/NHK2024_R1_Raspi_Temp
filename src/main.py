@@ -1,6 +1,7 @@
 import socket
 import json
 from typing import Dict
+import connect_with_can
 
 class ControllerData:
     """

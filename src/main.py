@@ -58,11 +58,11 @@ class ControllerData:
     def __repr__(self):
         return str(self.__dict__)
 
-def parse_message(data: ControllerData):
+def parse_message(data: ControllerData, bus):
     if data.btn_a == 1:
         print("btn_a is pushed")
         
-    send_message_on_can(0x106, bytearray([data.v_x, data.v_y, data.omega]))
+    send_message_on_can(0x106, bytearray([data.v_x, data.v_y, data.omega]), bus)
 
 def start_udp_server(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -71,19 +71,20 @@ def start_udp_server(ip, port):
     print(f"UDP server listening on {ip}:{port}")
 
     try:
-        while True:
-            data, addr = sock.recvfrom(1024)  # バッファサイズは1024バイト
-            try:
-                message: Dict = json.loads(data.decode())
-                ctr_data = ControllerData(message)
-                print(f"v_x is {ctr_data.v_x} and v_y is {ctr_data.v_y}")
-                # p = multiprocessing.Process(target=parse_message, args=(ctr_data,))
-                # p.start()
-                # print(f"Data received: {ctr_data}")
-                parse_message(ctr_data)
-            except json.JSONDecodeError:
-                print("Invalid JSON format")
-                continue
+        with can.interface.Bus(channel='can0', bustype='socketcan', bitrate=5000000) as bus:
+            while True:
+                data, addr = sock.recvfrom(1024)  # バッファサイズは1024バイト
+                try:
+                    message: Dict = json.loads(data.decode())
+                    ctr_data = ControllerData(message)
+                    print(f"v_x is {ctr_data.v_x} and v_y is {ctr_data.v_y}")
+                    # p = multiprocessing.Process(target=parse_message, args=(ctr_data,))
+                    # p.start()
+                    # print(f"Data received: {ctr_data}")
+                    parse_message(ctr_data, bus)
+                except json.JSONDecodeError:
+                    print("Invalid JSON format")
+                    continue
             
     except KeyboardInterrupt:
         print("Server stopped")

@@ -83,3 +83,43 @@ if __name__ == "__main__":
     send_message()
 
 ```
+
+## 起動時の設定
+```
+cd /etc/systemd/system/
+sudo vim r1.service
+```
+
+以下の記述を`r1.serice`に書き込む
+```
+[Unit]
+Description=仮想環境の起動とコマンドの実行
+
+[Service]
+# ディレクトリへ移動してから環境を有効にし、コマンドを実行
+ExecStart=/bin/bash -c 'cd /home/pi/Devlopment/NHK2024_R1_Raspi; source ./env/bin/activate; python3 your_script.py'
+
+[Install]
+WantedBy=multi-user.target
+```
+
+起動させて動作チェック（`active`になってればOK）
+```
+sudo systemctl start r1.service
+sudo systemctl status r1.service
+```
+
+プロセスの停止は
+```
+sudo systemctl stop r1.service
+```
+
+起動時実行を有効化
+```
+sudo systemctl enable r1.service
+```
+
+起動時実行を停止するには
+```
+sudo systemctl disable r1.service
+```
